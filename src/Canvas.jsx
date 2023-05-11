@@ -1,11 +1,13 @@
 import css from './Canvas.module.scss';
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 
 /**
  * This component is responsible for rendering the canvas with the current nonogram state.
  */
 export default function Canvas({rows, cols}) {
     const ref = useRef(null);
+    const [colInput, setColInput] = useState(null);
+    const [rowInput, setRowInput] = useState(null);
 
     const size = 20;
     const numbersWidth = 6 * size;
@@ -80,6 +82,14 @@ export default function Canvas({rows, cols}) {
         console.log("mouse position: ", x, y);
         console.log("cell: ", r, c);
 
+        if (r < 0 && c >= 0 && c < cols) {
+            setColInput(c);
+            setRowInput(null);
+        } else if (c < 0 && r >= 0 && r < rows) {
+            setRowInput(r);
+            setColInput(null);
+        }
+
         fillCell(ctx, r, c, 'black');
     };
 
@@ -90,8 +100,11 @@ export default function Canvas({rows, cols}) {
 
         canvas.removeEventListener('click', handleClick); // prevent double assignment
         canvas.addEventListener('click', handleClick);
-
     }, []);
+
+    useEffect(() => {
+
+    }, [colInput, rowInput]);
 
     return (
         <canvas
