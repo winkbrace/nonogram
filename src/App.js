@@ -1,8 +1,13 @@
-import Canvas from "./Canvas";
+import Canvas from "./components/Canvas";
+import NonogramInput from "./components/NonogramInput";
+import Board from "./solver/Board";
 import css from "./App.module.scss";
-import NonogramInput from "./NonogramInput";
+
+require('canvasinput/CanvasInput');
 
 function App() {
+    const board = new Board(20, 20);
+
     return (
         <div className={css.root}>
             <header className={css.header}>
@@ -10,7 +15,7 @@ function App() {
                 <NonogramInput />
             </header>
             <main>
-                <Canvas rows={20} cols={20} />
+                <Canvas board={board} />
             </main>
         </div>
     );
