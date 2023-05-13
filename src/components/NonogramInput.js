@@ -1,7 +1,7 @@
 import {useState} from "react";
 import css from "./NonogramInput.module.scss";
 
-export default function NonogramInput({input}) {
+export default function NonogramInput({input, onChange}) {
     const [value, setValue] = useState(input);
 
     if (input !== value) {
@@ -9,7 +9,7 @@ export default function NonogramInput({input}) {
     }
 
     return (
-        <div className={css.root}>
+        <div className={css.root} onChange={onChange}>
             <input type="text" defaultValue={value} />
         </div>
     )

@@ -18,8 +18,8 @@ function App() {
             </header>
             <section>
                 <Button onClick={() => board.clear()}>⬅️ Clear</Button>
-                <NonogramInput input={input} />
-                <Button onClick={() => board.solve()}>🚀 Solve</Button>
+                <NonogramInput input={input} onChange={(e) => setInput(e.target.value)} />
+                <Button onClick={() => board.solve(input)}>🚀 Solve</Button>
             </section>
             <main>
                 <Canvas board={board} />

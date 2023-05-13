@@ -55,8 +55,14 @@ export default class Board {
         this.listeners.inputChange.forEach(f => f(this.inputString));
     }
 
-    solve() {
+    solve(input) {
+        console.log("input: ", input);
+        this.inputString = input;
+        const cols = input.match(/c\[[\d\,\s]+\]/);
+        const rows = input.match(/r\[[\d\,\s]+\]/);
+        console.log("cols and rows: ", cols, rows);
 
+        // this.inputChanged();
     }
 
     clear() {
