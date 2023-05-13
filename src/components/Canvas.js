@@ -96,6 +96,16 @@ export default function Canvas({board}) {
                 );
             }
         }
+
+        // drawSolution(ctx);
+    }
+
+    const drawSolution = (ctx) => {
+        board.getAllCells().forEach((cell) => {
+            if (! cell) return;
+            fillCell(ctx, cell.r, cell.c, cell.color);
+        });
+        ctx.fillStyle = 'black';
     }
 
     const fillCell = (ctx, r, c, color) => {
@@ -184,8 +194,6 @@ export default function Canvas({board}) {
         canvas.style.height = height + "px";
         const ctx = canvas.getContext('2d');
         ctx.scale(ratio, ratio);
-
-        return {canvas};
     }
 
     function resize(rowHintSize, colHintSize) {
@@ -201,10 +209,11 @@ export default function Canvas({board}) {
     }
 
     useEffect(() => {
-        const {canvas} = setCanvasSize(width, height);
+        setCanvasSize(width, height);
 
         redraw();
 
+        const canvas = ref.current;
         canvas.removeEventListener('click', handleClick); // prevent double assignment
         canvas.addEventListener('click', handleClick);
     }, []);
@@ -228,6 +237,36 @@ export default function Canvas({board}) {
         setColHintSize(maxColHintSize);
 
         resize(maxRowHintSize, maxColHintSize);
+    });
+
+    board.onNextStep((step) => {
+        const canvas = ref.current;
+        const ctx = canvas.getContext('2d');
+
+        if (step.rule === "done") {
+            return;
+        }
+
+        // highlight line
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'yellow';
+        ctx.strokeStyle = 'yellow';
+        const direction = step.line.id.substring(0, 3);
+        const i = parseInt(step.line.id.substring(3));
+        if (direction === "row") {
+            const {x, y} = findPositionAt(i, 0);
+            ctx.strokeRect(x, y, boardWidth, cellSize);
+        } else {
+            const {x, y} = findPositionAt(0, i);
+            ctx.strokeRect(x, y, cellSize, boardHeight);
+        }
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'black';
+
+        // draw the discovered cells
+        step.cells.forEach((cell) => {
+            fillCell(ctx, cell.r, cell.c, cell.color);
+        });
     });
 
     return (

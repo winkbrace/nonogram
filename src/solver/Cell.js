@@ -8,4 +8,33 @@ export default class Cell {
         this.r = r;
         this.c = c;
     }
+
+    isUnknown() {
+        return this.state === Cell.UNKNOWN;
+    }
+
+    isEmpty() {
+        return this.state === Cell.EMPTY;
+    }
+
+    isFilled() {
+        return this.state === Cell.FILLED;
+    }
+
+    markEmpty() {
+        this.state = Cell.EMPTY;
+    }
+
+    markFilled() {
+        this.state = Cell.FILLED;
+    }
+
+    get color() {
+        if (this.isEmpty()) {
+            return "white";
+        } else if (this.isFilled()) {
+            return "black";
+        }
+        return "#ddd";
+    }
 }
