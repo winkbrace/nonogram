@@ -115,17 +115,15 @@ export default function Canvas({board}) {
         // ensure the inputs are placed inside the canvas
         pos.x = c > cols - 9 ? width - 180 : pos.x;
         pos.y = r === rows - 1 ? pos.y - cellSize : pos.y;
-        console.log(pos);
 
         const addToBoard = (values) => {
             if (r >= 0) {
-                board.rowHints[r] = values;
+                board.addRowHints(r, values);
                 if (values.length > rowHintSize) {
                     setRowHintSize(values.length);
-                    console.log("changed row hint size to " + values.length);
                 }
             } else {
-                board.colHints[c] = values;
+                board.addColHints(c, values);
                 if (values.length > colHintSize) {
                     setColHintSize(values.length);
                 }

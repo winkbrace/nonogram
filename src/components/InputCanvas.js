@@ -1,9 +1,10 @@
 import {useEffect, useRef} from "react";
+import cx from "classnames";
 import css from './InputCanvas.module.scss';
 
 require('canvasinput/CanvasInput');
 
-export default function InputCanvas({width, height, inputPos, addToBoard, destructor, old}) {
+export default function InputCanvas({width, height, inputPos, addToBoard, destructor, next, old}) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -52,6 +53,7 @@ export default function InputCanvas({width, height, inputPos, addToBoard, destru
             const x = Math.floor(e.clientX - rect.left);
             const y = Math.floor(e.clientY - rect.top);
             if (x < inputPos.x || x > inputPos.x + 170 || y < inputPos.y || y > inputPos.y + 40) {
+                console.log("clicked outside the input at ", x, y);
                 input.destroy();
                 destructor();
             }
@@ -62,6 +64,6 @@ export default function InputCanvas({width, height, inputPos, addToBoard, destru
     });
 
     return (
-        <canvas className={css.root} ref={ref} width={width} height={height}></canvas>
+        <canvas className={cx(css.root, 'input-canvas')} ref={ref} width={width} height={height}></canvas>
     );
 };
