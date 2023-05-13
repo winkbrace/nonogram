@@ -46,6 +46,17 @@ export default function InputCanvas({width, height, inputPos, addToBoard, destru
             }
         });
 
+        // destroy the input if the users clicks outside of it
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor(e.clientX - rect.left);
+            const y = Math.floor(e.clientY - rect.top);
+            if (x < inputPos.x || x > inputPos.x + 170 || y < inputPos.y || y > inputPos.y + 40) {
+                input.destroy();
+                destructor();
+            }
+        });
+
         input.render();
         input.focus(old.length);
     });

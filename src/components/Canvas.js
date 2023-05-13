@@ -104,24 +104,25 @@ export default function Canvas({board}) {
         if (r < 0 || r >= rows || c < 0 || c >= cols)
             return;
 
+        const {x, y} = findPositionAt(r, c);
         ctx.fillStyle = color;
-        ctx.fillRect(
-            width - ((cols - c) * cellSize),
-            height - ((rows - r) * cellSize),
-            cellSize,
-            cellSize
-        );
+        ctx.fillRect(x, y, cellSize, cellSize);
     }
 
     function createInputCanvas(r, c) {
-        const pos = findPositionAt(r, c, false);
         const values = board.getHintsAtPos(r, c).join(" ");
+        const pos = findPositionAt(r, c, false);
+        // ensure the inputs are placed inside the canvas
+        pos.x = c > cols - 9 ? width - 180 : pos.x;
+        pos.y = r === rows - 1 ? pos.y - cellSize : pos.y;
+        console.log(pos);
 
         const addToBoard = (values) => {
             if (r >= 0) {
                 board.rowHints[r] = values;
                 if (values.length > rowHintSize) {
                     setRowHintSize(values.length);
+                    console.log("changed row hint size to " + values.length);
                 }
             } else {
                 board.colHints[c] = values;
@@ -166,7 +167,9 @@ export default function Canvas({board}) {
         console.log("mouse position: ", x, y);
         console.log("cell: ", r, c);
 
-        if (r < 0 && c >= 0 && c < cols) {
+        if (inputCanvas) {
+            setInputCanvas(null);
+        } else if (r < 0 && c >= 0 && c < cols) {
             createInputCanvas(-1, c);
         } else if (c < 0 && r >= 0 && r < rows) {
             createInputCanvas(r, -1);
@@ -196,7 +199,7 @@ export default function Canvas({board}) {
 
         canvas.removeEventListener('click', handleClick); // prevent double assignment
         canvas.addEventListener('click', handleClick);
-    });
+    }, []);
 
     useEffect(() => {
         // If we only use the state setters, the values are not updated when using them for setCanvasSize =/
