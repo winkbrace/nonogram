@@ -9,7 +9,6 @@ function App() {
     const [input, setInput] = useState("");
 
     const board = new Board(20, 20);
-    board.onInputChange(setInput);
 
     return (
         <div className={css.root}>

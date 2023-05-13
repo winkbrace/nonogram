@@ -23,11 +23,9 @@ export default function Canvas({board}) {
     const redraw = () => {
         const canvas = ref.current;
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, width, height);
-        drawBoard(ctx);
-    }
 
-    const drawBoard = (ctx) => {
+        ctx.clearRect(0, 0, width, height);
+
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
 
@@ -187,20 +185,10 @@ export default function Canvas({board}) {
         const ctx = canvas.getContext('2d');
         ctx.scale(ratio, ratio);
 
-        return {canvas, ctx};
+        return {canvas};
     }
 
-    useEffect(() => {
-        const {canvas, ctx} = setCanvasSize(width, height);
-
-        drawBoard(ctx);
-
-        canvas.removeEventListener('click', handleClick); // prevent double assignment
-        canvas.addEventListener('click', handleClick);
-    }, []);
-
-    useEffect(() => {
-        // If we only use the state setters, the values are not updated when using them for setCanvasSize =/
+    function resize(rowHintSize, colHintSize) {
         const hintsWidth = rowHintSize * cellSize;
         const hintsHeight = colHintSize * cellSize;
         const width = hintsWidth + boardWidth + 2 * margin;
@@ -210,8 +198,37 @@ export default function Canvas({board}) {
         setWidth(width);
         setHeight(height);
         setCanvasSize(width, height);
+    }
+
+    useEffect(() => {
+        const {canvas} = setCanvasSize(width, height);
+
         redraw();
-    }, [rowHintSize, colHintSize]);
+
+        canvas.removeEventListener('click', handleClick); // prevent double assignment
+        canvas.addEventListener('click', handleClick);
+    }, []);
+
+    useEffect(() => {
+        redraw();
+    }, [width, height]);
+
+    // add a listener to the board onInputChange event to redraw the board when the input changes
+    board.onInputChange(() => {
+        // Never shrink below 5
+        const maxRowHintSize = Math.max(5, board.getMaxRowHintSize());
+        const maxColHintSize = Math.max(5, board.getMaxColHintSize());
+
+        if (maxRowHintSize <= rowHintSize && maxColHintSize <= colHintSize) {
+            redraw();
+            return;
+        }
+
+        setRowHintSize(maxRowHintSize);
+        setColHintSize(maxColHintSize);
+
+        resize(maxRowHintSize, maxColHintSize);
+    });
 
     return (
         <div className={css.root} style={{width: `${width}px`, height: `${height}px`}}>
