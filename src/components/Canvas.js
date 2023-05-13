@@ -11,13 +11,16 @@ export default function Canvas({board}) {
     const [inputCanvas, setInputCanvas] = useState(null);
 
     const cellSize = 20;
-    const hintsWidth = 6 * cellSize;
-    const hintsHeight = 6 * cellSize;
+    const margin = 5;
+    const rowHintSize = 5;
+    const colHintSize = 5;
+    const hintsWidth = rowHintSize * cellSize;
+    const hintsHeight = colHintSize * cellSize;
     const boardWidth = cellSize * cols;
     const boardHeight = cellSize * rows;
 
-    const [width, setWidth] = useState(hintsWidth + boardWidth);
-    const [height, setHeight] = useState(hintsHeight + boardHeight);
+    const [width, setWidth] = useState(hintsWidth + boardWidth + 2 * margin);
+    const [height, setHeight] = useState(hintsHeight + boardHeight + 2 * margin);
 
     const redraw = () => {
         const canvas = ref.current;
@@ -27,39 +30,43 @@ export default function Canvas({board}) {
     }
 
     const drawBoard = (ctx) => {
-console.log(board);
         ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
 
         // draw the board
         for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++){
-                ctx.strokeRect(
-                    width - ((c + 1) * cellSize) - 1,
-                    height - ((r + 1) * cellSize) - 1,
-                    cellSize,
-                    cellSize
-                );
+            for (let c = 0; c < cols; c++) {
+                const {x, y} = findPositionAt(r, c);
+                ctx.strokeRect(x, y, cellSize, cellSize);
+
+                if (r % 5 === 0 && c % 5 === 0) {
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, cellSize * 5, cellSize * 5);
+                }
+                ctx.lineWidth = 1;
             }
         }
 
         // draw the hints area borders
         for (let r = 0; r < rows; r++) {
-            ctx.strokeRect(
-                1,
-                height - ((r + 1) * cellSize) - 1,
-                hintsHeight - 2,
-                cellSize
-            );
+            const {x, y} = findPositionAt(r, -rowHintSize);
+            ctx.strokeRect(x, y, hintsHeight, cellSize);
         }
         for (let c = 0; c < cols; c++) {
-            ctx.strokeRect(
-                width - ((c + 1) * cellSize) - 1,
-                1,
-                cellSize,
-                hintsWidth - 2
-            );
+            const {x, y} = findPositionAt(-colHintSize, c);
+            ctx.strokeRect(x, y, cellSize, hintsWidth);
         }
+        // fat lines
+        ctx.lineWidth = 2;
+        for (let r = 0; r < rows; r+=5) {
+            const {x, y} = findPositionAt(r, -rowHintSize);
+            ctx.strokeRect(x, y, hintsWidth, cellSize * 5);
+        }
+        for (let c = 0; c < cols; c+=5) {
+            const {x, y} = findPositionAt(-colHintSize, c);
+            ctx.strokeRect(x, y, cellSize * 5, hintsWidth);
+        }
+        ctx.lineWidth = 1;
 
         // draw the hints
         ctx.font = "bold " + Math.floor(cellSize * 0.65) + "px Courier New";
@@ -74,10 +81,11 @@ console.log(board);
                 ctx.fillText(
                     board.rowHints[r][i],
                     Math.floor(pos.x - (cellSize * 0.25)),
-                    Math.floor(pos.y - (cellSize * 0.32))
+                    Math.floor(pos.y - (cellSize * 0.25))
                 );
             }
         }
+        ctx.textAlign = "center";
         for (let c = 0; c < cols; c++) {
             const hintsLength = board.colHints[c].length;
             if (!hintsLength) {
@@ -87,7 +95,7 @@ console.log(board);
                 const pos = findPositionAt(i - hintsLength + 1, c + 1);
                 ctx.fillText(
                     board.colHints[c][i],
-                    Math.floor(pos.x - (cellSize * 0.25)),
+                    Math.floor(pos.x - (cellSize * 0.5)),
                     Math.floor(pos.y - (cellSize * 0.32))
                 );
             }
@@ -108,7 +116,16 @@ console.log(board);
     }
 
     function createInputCanvas(r, c) {
-        const pos = findPositionAt(r, c);
+        const pos = findPositionAt(r, c, false);
+        const values = board.getHintsAtPos(r, c).join(" ");
+
+        const addToBoard = (values) => {
+            if (r >= 0) {
+                board.rowHints[r] = values;
+            } else {
+                board.colHints[c] = values;
+            }
+        }
 
         // We have to destroy the canvas, because it has 3 mouse event listeners from InputCanvas that get in the way.
         const destructor = () => {
@@ -117,7 +134,7 @@ console.log(board);
         };
 
         setInputCanvas(
-            <InputCanvas width={width} height={height} inputPos={pos} board={board} r={r} c={c} destructor={destructor}  />
+            <InputCanvas width={width} height={height} inputPos={pos} addToBoard={addToBoard} destructor={destructor} old={values} />
         )
     }
 
@@ -127,9 +144,9 @@ console.log(board);
         return {r, c};
     }
 
-    const findPositionAt = (r, c) => {
-        const x = hintsWidth + (c * cellSize);
-        const y = hintsHeight + (r * cellSize);
+    const findPositionAt = (r, c, withOffset = true) => {
+        const x = hintsWidth + (c * cellSize) + margin - (withOffset ? 0.5 : 0);
+        const y = hintsHeight + (r * cellSize) + margin - (withOffset ? 0.5 : 0);
 
         return {x, y};
     }

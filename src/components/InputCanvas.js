@@ -3,7 +3,7 @@ import css from './InputCanvas.module.scss';
 
 require('canvasinput/CanvasInput');
 
-export default function InputCanvas({width, height, inputPos, board, r, c, destructor}) {
+export default function InputCanvas({width, height, inputPos, addToBoard, destructor, old}) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -26,6 +26,7 @@ export default function InputCanvas({width, height, inputPos, board, r, c, destr
             borderRadius: 3,
             boxShadow: '1px 1px 0px #fff',
             innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+            value: old,
             onkeydown: (e) => {
                 if (e.key === 'Escape') {
                     input.destroy();
@@ -38,19 +39,16 @@ export default function InputCanvas({width, height, inputPos, board, r, c, destr
             },
             onsubmit: (e) => {
                 const values = input._value.split(' ').filter(Number).map(Number);
-                if (r >= 0) {
-                    board.rowHints[r] = values;
-                } else {
-                    board.colHints[c] = values;
-                }
+                addToBoard(values);
+
                 input.destroy();
                 destructor();
             }
         });
 
         input.render();
-        input.focus(0);
-    }, []);
+        input.focus(old.length);
+    });
 
     return (
         <canvas className={css.root} ref={ref} width={width} height={height}></canvas>
