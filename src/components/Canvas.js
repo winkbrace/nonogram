@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import css from './Canvas.module.scss';
+import InputCanvas from "./InputCanvas";
 
 /**
  * This component is responsible for rendering the canvas with the current nonogram state.
@@ -8,6 +9,7 @@ export default function Canvas({board}) {
     const {rows, cols} = board;
     const ref = useRef(null);
     const [manualInput, setManualInput] = useState(null);
+    const [inputCanvas, setInputCanvas] = useState(null);
 
     const cellSize = 20;
     const hintsWidth = 6 * cellSize;
@@ -88,45 +90,11 @@ export default function Canvas({board}) {
     }
 
     function drawInput(r, c) {
-        const canvas = ref.current.cloneNode(true);
         const pos = findPositionAt(r, c);
 
-        const input = new window.CanvasInput({
-            canvas: canvas,
-            x: pos.x,
-            y: pos.y,
-            value: '',
-            fontSize: 18,
-            fontFamily: 'Arial',
-            fontColor: '#212121',
-            fontWeight: 'bold',
-            width: 200,
-            padding: 8,
-            borderWidth: 1,
-            borderColor: '#000',
-            borderRadius: 3,
-            boxShadow: '1px 1px 0px #fff',
-            innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
-            onkeydown: (e) => {
-                // only numbers and spaces allowed
-                if (! isFinite(e.key) && e.key !== ' ') {
-                    e.preventDefault();
-                }
-            },
-            onsubmit: (e) => {
-                const values = input._value.split(' ').filter(Number).map(Number);
-                if (r > 0) {
-                    board.rowHints[r] = values;
-                } else {
-                    board.colHints[c] = values;
-                }
-                input.destroy();
-                redraw();
-            }
-        });
-
-        input.render();
-        input.focus(0);
+        setInputCanvas(
+            <InputCanvas width={width} height={height} inputPos={pos} redraw={redraw} board={board} r={r} c={c} />
+        )
     }
 
     const findCellAt = (x, y) => {
@@ -183,11 +151,14 @@ export default function Canvas({board}) {
     }, [manualInput]);
 
     return (
-        <canvas
-            ref={ref}
-            className={css.root}
-            width={`${width}px`}
-            height={`${height}px`}
-        />
+        <div className={css.root}>
+            <canvas
+                ref={ref}
+                className={css.board}
+                width={`${width}px`}
+                height={`${height}px`}
+            />
+            {inputCanvas}
+        </div>
     );
 }

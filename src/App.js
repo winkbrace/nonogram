@@ -3,8 +3,6 @@ import NonogramInput from "./components/NonogramInput";
 import Board from "./solver/Board";
 import css from "./App.module.scss";
 
-require('canvasinput/CanvasInput');
-
 function App() {
     const board = new Board(20, 20);
 

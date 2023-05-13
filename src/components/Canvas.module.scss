@@ -1,4 +1,11 @@
 .root {
-  background-color: #eee;
-  outline: 1.5rem solid #eee;
+    position: relative;
+}
+
+.board {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #eee;
+    outline: 1.5rem solid #eee;
 }
