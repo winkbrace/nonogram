@@ -8,17 +8,15 @@ import InputCanvas from "./InputCanvas";
 export default function Canvas({board}) {
     const {rows, cols} = board;
     const ref = useRef(null);
-    const [inputCanvas, setInputCanvas] = useState(null);
-
-    const cellSize = 20;
     const margin = 5;
-    const rowHintSize = 5;
-    const colHintSize = 5;
-    const hintsWidth = rowHintSize * cellSize;
-    const hintsHeight = colHintSize * cellSize;
-    const boardWidth = cellSize * cols;
-    const boardHeight = cellSize * rows;
-
+    const [cellSize, setCellSize] = useState(20);
+    const [boardWidth, setBoardWidth] = useState(cellSize * cols);
+    const [boardHeight, setBoardHeight] = useState(cellSize * rows);
+    const [inputCanvas, setInputCanvas] = useState(null);
+    const [rowHintSize, setRowHintSize] = useState(5);
+    const [colHintSize, setColHintSize] = useState(5);
+    const [hintsWidth, setHintsWidth] = useState(rowHintSize * cellSize);
+    const [hintsHeight, setHintsHeight] = useState(colHintSize * cellSize);
     const [width, setWidth] = useState(hintsWidth + boardWidth + 2 * margin);
     const [height, setHeight] = useState(hintsHeight + boardHeight + 2 * margin);
 
@@ -50,11 +48,11 @@ export default function Canvas({board}) {
         // draw the hints area borders
         for (let r = 0; r < rows; r++) {
             const {x, y} = findPositionAt(r, -rowHintSize);
-            ctx.strokeRect(x, y, hintsHeight, cellSize);
+            ctx.strokeRect(x, y, hintsWidth, cellSize);
         }
         for (let c = 0; c < cols; c++) {
             const {x, y} = findPositionAt(-colHintSize, c);
-            ctx.strokeRect(x, y, cellSize, hintsWidth);
+            ctx.strokeRect(x, y, cellSize, hintsHeight);
         }
         // fat lines
         ctx.lineWidth = 2;
@@ -64,7 +62,7 @@ export default function Canvas({board}) {
         }
         for (let c = 0; c < cols; c+=5) {
             const {x, y} = findPositionAt(-colHintSize, c);
-            ctx.strokeRect(x, y, cellSize * 5, hintsWidth);
+            ctx.strokeRect(x, y, cellSize * 5, hintsHeight);
         }
         ctx.lineWidth = 1;
 
@@ -122,8 +120,14 @@ export default function Canvas({board}) {
         const addToBoard = (values) => {
             if (r >= 0) {
                 board.rowHints[r] = values;
+                if (values.length > rowHintSize) {
+                    setRowHintSize(values.length);
+                }
             } else {
                 board.colHints[c] = values;
+                if (values.length > colHintSize) {
+                    setColHintSize(values.length);
+                }
             }
         }
 
@@ -171,7 +175,8 @@ export default function Canvas({board}) {
         }
     };
 
-    useEffect(() => {
+    function setCanvasSize(width, height) {
+        console.log("setting size to: ", width, height);
         const ratio = window.devicePixelRatio;
         const canvas = ref.current;
         canvas.width = width * ratio;
@@ -181,6 +186,12 @@ export default function Canvas({board}) {
         const ctx = canvas.getContext('2d');
         ctx.scale(ratio, ratio);
 
+        return {canvas, ctx};
+    }
+
+    useEffect(() => {
+        const {canvas, ctx} = setCanvasSize(width, height);
+
         drawBoard(ctx);
 
         canvas.removeEventListener('click', handleClick); // prevent double assignment
@@ -188,11 +199,21 @@ export default function Canvas({board}) {
     });
 
     useEffect(() => {
+        // If we only use the state setters, the values are not updated when using them for setCanvasSize =/
+        const hintsWidth = rowHintSize * cellSize;
+        const hintsHeight = colHintSize * cellSize;
+        const width = hintsWidth + boardWidth + 2 * margin;
+        const height = hintsHeight + boardHeight + 2 * margin;
+        setHintsWidth(hintsWidth);
+        setHintsHeight(hintsHeight);
+        setWidth(width);
+        setHeight(height);
+        setCanvasSize(width, height);
         redraw();
-    }, [width, height]);
+    }, [rowHintSize, colHintSize]);
 
     return (
-        <div className={css.root} style={{width: `${width}px`}}>
+        <div className={css.root} style={{width: `${width}px`, height: `${height}px`}}>
             <canvas ref={ref} className={css.board} />
             {inputCanvas}
         </div>
