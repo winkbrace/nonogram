@@ -8,7 +8,6 @@ import InputCanvas from "./InputCanvas";
 export default function Canvas({board}) {
     const {rows, cols} = board;
     const ref = useRef(null);
-    const [manualInput, setManualInput] = useState(null);
     const [inputCanvas, setInputCanvas] = useState(null);
 
     const cellSize = 20;
@@ -16,8 +15,9 @@ export default function Canvas({board}) {
     const hintsHeight = 6 * cellSize;
     const boardWidth = cellSize * cols;
     const boardHeight = cellSize * rows;
-    const width = hintsWidth + boardWidth;
-    const height = hintsHeight + boardHeight;
+
+    const [width, setWidth] = useState(hintsWidth + boardWidth);
+    const [height, setHeight] = useState(hintsHeight + boardHeight);
 
     const redraw = () => {
         const canvas = ref.current;
@@ -27,6 +27,7 @@ export default function Canvas({board}) {
     }
 
     const drawBoard = (ctx) => {
+console.log(board);
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
 
@@ -42,29 +43,14 @@ export default function Canvas({board}) {
             }
         }
 
-        // draw the hints area
+        // draw the hints area borders
         for (let r = 0; r < rows; r++) {
-            // draw the container
             ctx.strokeRect(
                 1,
                 height - ((r + 1) * cellSize) - 1,
                 hintsHeight - 2,
                 cellSize
             );
-
-            // draw the hints
-            const hintsLength = board.rowHints[r].length;
-            if (! hintsLength) {
-                continue;
-            }
-            for (let i = 0; i < hintsLength; i++) {
-                const pos = findPositionAt(r, i - hintsLength + 1);
-                ctx.strokeText(
-                    board.rowHints[r][i],
-                    pos.x - (cellSize * 0.75),
-                    pos.y - (cellSize * 0.25)
-                );
-            }
         }
         for (let c = 0; c < cols; c++) {
             ctx.strokeRect(
@@ -73,6 +59,38 @@ export default function Canvas({board}) {
                 cellSize,
                 hintsWidth - 2
             );
+        }
+
+        // draw the hints
+        ctx.font = "bold " + Math.floor(cellSize * 0.65) + "px Courier New";
+        ctx.textAlign = "right";
+        for (let r = 0; r < rows; r++) {
+            const hintsLength = board.rowHints[r].length;
+            if (!hintsLength) {
+                continue;
+            }
+            for (let i = 0; i < hintsLength; i++) {
+                const pos = findPositionAt(r + 1, i - hintsLength + 1);
+                ctx.fillText(
+                    board.rowHints[r][i],
+                    Math.floor(pos.x - (cellSize * 0.25)),
+                    Math.floor(pos.y - (cellSize * 0.32))
+                );
+            }
+        }
+        for (let c = 0; c < cols; c++) {
+            const hintsLength = board.colHints[c].length;
+            if (!hintsLength) {
+                continue;
+            }
+            for (let i = 0; i < hintsLength; i++) {
+                const pos = findPositionAt(i - hintsLength + 1, c + 1);
+                ctx.fillText(
+                    board.colHints[c][i],
+                    Math.floor(pos.x - (cellSize * 0.25)),
+                    Math.floor(pos.y - (cellSize * 0.32))
+                );
+            }
         }
     }
 
@@ -89,11 +107,17 @@ export default function Canvas({board}) {
         );
     }
 
-    function drawInput(r, c) {
+    function createInputCanvas(r, c) {
         const pos = findPositionAt(r, c);
 
+        // We have to destroy the canvas, because it has 3 mouse event listeners from InputCanvas that get in the way.
+        const destructor = () => {
+            setInputCanvas(null);
+            redraw();
+        };
+
         setInputCanvas(
-            <InputCanvas width={width} height={height} inputPos={pos} redraw={redraw} board={board} r={r} c={c} />
+            <InputCanvas width={width} height={height} inputPos={pos} board={board} r={r} c={c} destructor={destructor}  />
         )
     }
 
@@ -122,42 +146,37 @@ export default function Canvas({board}) {
         console.log("cell: ", r, c);
 
         if (r < 0 && c >= 0 && c < cols) {
-            setManualInput({col: c});
+            createInputCanvas(-1, c);
         } else if (c < 0 && r >= 0 && r < rows) {
-            setManualInput({row: r});
+            createInputCanvas(r, -1);
         } else {
             fillCell(ctx, r, c, 'black');
         }
     };
 
     useEffect(() => {
+        const ratio = window.devicePixelRatio;
         const canvas = ref.current;
+        canvas.width = width * ratio;
+        canvas.height = height * ratio;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
         const ctx = canvas.getContext('2d');
+        ctx.scale(ratio, ratio);
+
         drawBoard(ctx);
 
         canvas.removeEventListener('click', handleClick); // prevent double assignment
         canvas.addEventListener('click', handleClick);
-    }, []);
+    });
 
-    // Draw manual input field at cursor for the number input areas.
-    // This is triggered when user clicks on the area.
     useEffect(() => {
-        if (!manualInput)
-            return;
-
-        const {row, col} = manualInput;
-
-        drawInput(row ?? 0, col ?? 0);
-    }, [manualInput]);
+        redraw();
+    }, [width, height]);
 
     return (
-        <div className={css.root}>
-            <canvas
-                ref={ref}
-                className={css.board}
-                width={`${width}px`}
-                height={`${height}px`}
-            />
+        <div className={css.root} style={{width: `${width}px`}}>
+            <canvas ref={ref} className={css.board} />
             {inputCanvas}
         </div>
     );
