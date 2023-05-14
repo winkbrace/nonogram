@@ -11,6 +11,7 @@ export default class Solver {
         if (! this.isSolved) {
             this.solve();
         }
+        console.log("steps", this.steps);
 
         if (! this.steps.length) {
             this.board.step(new Step(null, null, "done"));

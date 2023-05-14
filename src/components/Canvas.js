@@ -6,9 +6,10 @@ import InputCanvas from "./InputCanvas";
  * This component is responsible for rendering the canvas with the current nonogram state.
  */
 export default function Canvas({board}) {
-    const {rows, cols} = board;
     const ref = useRef(null);
     const margin = 5;
+    const [rows, setRows] = useState(board.rows);
+    const [cols, setCols] = useState(board.cols);
     const [cellSize, setCellSize] = useState(20);
     const [boardWidth, setBoardWidth] = useState(cellSize * cols);
     const [boardHeight, setBoardHeight] = useState(cellSize * rows);
@@ -209,18 +210,22 @@ export default function Canvas({board}) {
     }
 
     useEffect(() => {
+        setRows(board.rows);
+        setCols(board.cols);
         setCanvasSize(width, height);
+
+
+        // TODO: I want to make a new canvas from App.js instead of resizing it here.
+
+
+
 
         redraw();
 
         const canvas = ref.current;
         canvas.removeEventListener('click', handleClick); // prevent double assignment
         canvas.addEventListener('click', handleClick);
-    }, []);
-
-    useEffect(() => {
-        redraw();
-    }, [width, height]);
+    }, [board]);
 
     // add a listener to the board onInputChange event to redraw the board when the input changes
     board.onInputChange(() => {

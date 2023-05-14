@@ -13,16 +13,22 @@ export default class Board {
         nextStep: [],
     };
 
-    constructor(rows, cols) {
-        this.rows = rows;
-        this.cols = cols;
+    static empty() {
+        const emptyHints = new Array(20).join(',');
+        const input = "c[" + emptyHints + "]r[" + emptyHints + "]";
 
-        this.init(rows, cols);
+        return this.fromInput(input);
     };
 
-    init(rows, cols) {
-        this.rowHints = new Array(rows).fill([]);
-        this.colHints = new Array(cols).fill([]);
+    static fromInput(input) {
+        const board = new Board();
+        board.parse(input);
+
+        return board;
+    }
+
+    createGrid() {
+        const { rows, cols } = this;
 
         for (let r = 0; r < rows; r++) {
             this.grid[r] = new Array(cols).fill(0);
@@ -101,7 +107,7 @@ export default class Board {
     }
 
     parse(input) {
-        // We could add more checks, but let's just allow the app to crash.
+        // We could add more checks, but let's just allow the app to crash on invalid input.
         if (! input) {
             return;
         }
@@ -110,14 +116,18 @@ export default class Board {
         const cols = input.match(/c\[[\d,\s]+\]/)[0].substring(2).replace("]", "").split(",");
         const rows = input.match(/r\[[\d,\s]+\]/)[0].substring(2).replace("]", "").split(",");
 
+        this.cols = cols.length;
+        this.rows = rows.length;
         this.colHints = cols.map(hints => hints.split(" ").map(Number));
         this.rowHints = rows.map(hints => hints.split(" ").map(Number));
+
+        this.createGrid();
 
         this.inputChanged();
     }
 
     clear() {
-        this.init(this.rows, this.cols);
+        this.createGrid(this.rows, this.cols);
         this.inputChanged();
     }
 }
