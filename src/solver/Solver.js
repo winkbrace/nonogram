@@ -13,7 +13,7 @@ export default class Solver {
         }
         console.log("steps", this.steps);
 
-        if (! this.steps.length) {
+        if (this.steps.length === 0) {
             this.board.step(new Step(null, null, "done"));
             return;
         }

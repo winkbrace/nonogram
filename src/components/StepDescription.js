@@ -3,7 +3,7 @@ import css from "./StepDescription.module.scss";
 export default function StepDescription(props) {
     const { step } = props;
 
-    const title = step ? "On " + step?.line.id : "";
+    const title = step && step.line ? "On " + step.line.id : "";
 
     return (
         <div className={css.root}>

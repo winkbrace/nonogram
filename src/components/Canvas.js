@@ -248,7 +248,7 @@ export default function Canvas({board}) {
         const canvas = ref.current;
         const ctx = canvas.getContext('2d');
 
-        if (step.rule === "done") {
+        if (! step || step.rule === "done") {
             return;
         }
 
