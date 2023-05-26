@@ -5,6 +5,12 @@ export default class Board {
     rows;
     cols;
     grid = [];
+
+    // The solved cells are updated in the grid, but we keep track of which cells
+    // we have shown here for when we step through the solution one step at a time.
+    // I couldn't make this work in the Canvas component.
+    shownCells = [];
+
     rowHints;
     colHints;
     inputString = "";
@@ -43,11 +49,15 @@ export default class Board {
     }
 
     getRow(r) {
-        return new Line(`row ${r}`, this.grid[r]);
+        return new Line(`row ${r}`, this.grid[r], this.rowHints[r]);
     }
 
     getCol(c) {
-        return new Line(`col ${c}`, this.grid.map(row => row[c]));
+        return new Line(`column ${c}`, this.grid.map(row => row[c]), this.colHints[c]);
+    }
+
+    addShownCell(r, c) {
+        this.shownCells.push(this.grid[r][c]);
     }
 
     addRowHints(r, hints) {
@@ -60,12 +70,18 @@ export default class Board {
         this.refreshInputString();
     }
 
-    getMaxRowHintSize() {
-        return Math.max(...this.rowHints.map(hints => hints.length));
+    getMaxRowHintCount() {
+        if (! this.maxRowHintsCount) {
+            this.maxRowHintsCount = Math.max(...this.rowHints.map(hints => hints.length));
+        }
+        return this.maxRowHintsCount;
     }
 
-    getMaxColHintSize() {
-        return Math.max(...this.colHints.map(hints => hints.length));
+    getMaxColHintCount() {
+        if (! this.maxColHintsCount) {
+            this.maxColHintsCount = Math.max(...this.colHints.map(hints => hints.length));
+        }
+        return this.maxColHintsCount;
     }
 
     refreshInputString() {
@@ -113,13 +129,13 @@ export default class Board {
         }
 
         this.inputString = input;
-        const cols = input.match(/c\[[\d,\s]+\]/)[0].substring(2).replace("]", "").split(",");
-        const rows = input.match(/r\[[\d,\s]+\]/)[0].substring(2).replace("]", "").split(",");
+        const cols = input.match(/c\[[\d,\s]+]/)[0].substring(2).replace("]", "").split(",");
+        const rows = input.match(/r\[[\d,\s]+]/)[0].substring(2).replace("]", "").split(",");
 
         this.cols = cols.length;
         this.rows = rows.length;
-        this.colHints = cols.map(hints => hints.split(" ").map(Number));
-        this.rowHints = rows.map(hints => hints.split(" ").map(Number));
+        this.colHints = cols.map(hints => hints.split(" ").map(Number).map(n => n > 0 ? n : ""));
+        this.rowHints = rows.map(hints => hints.split(" ").map(Number).map(n => n > 0 ? n : ""));
 
         this.createGrid();
 

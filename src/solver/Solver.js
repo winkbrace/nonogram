@@ -14,7 +14,7 @@ export default class Solver {
         console.log("steps", this.steps);
 
         if (this.steps.length === 0) {
-            this.board.step(new Step(null, null, "done"));
+            this.board.step(new Step(null, 0, null, "done"));
             return;
         }
 
@@ -23,37 +23,38 @@ export default class Solver {
 
     solve() {
         this.board.rowHints.forEach((hints, r) => {
-            this.solveLine(this.board.getRow(r), hints);
+            this.solveLine(this.board.getRow(r));
         });
 
         this.board.colHints.forEach((hints, c) => {
-            this.solveLine(this.board.getCol(c), hints);
+            this.solveLine(this.board.getCol(c));
         });
 
         this.isSolved = true;
     }
 
-    solveLine(line, hints) {
+    solveLine(line) {
         if (line.isSolved()) return;
 
-        this.noHintsRule(line, hints);
-        this.countFromBothSidesRule(line, hints);
+        this.noHintsRule(line);
+        this.countFromBothSidesRule(line);
     }
 
     /**
      * No hints means that all cells are empty.
      */
-    noHintsRule(line, hints) {
-        if (! hints.length) {
+    noHintsRule(line) {
+        if (! line.hints.length) {
             line.markAllUnknownAsEmpty();
-            this.steps.push(new Step(line, line.cells, "noHints"));
+            this.steps.push(new Step(line, 0, line.cells, "noHints"));
         }
     }
 
     /**
      * If we count from the edge on both sides of the line and hints have overlapping cells, we can mark the cells as filled.
      */
-    countFromBothSidesRule(line, hints) {
+    countFromBothSidesRule(line) {
+        const hints = line.hints;
         const start = [];
         const end = [];
 
@@ -81,7 +82,7 @@ export default class Solver {
             if (! cells.length) continue;
 
             cells.forEach(cell => cell.markFilled());
-            this.steps.push(new Step(line, cells, "countFromBothSides"));
+            this.steps.push(new Step(line, h, cells, "countFromBothSides"));
         }
     }
 }

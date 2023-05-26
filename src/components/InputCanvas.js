@@ -17,7 +17,7 @@ export default function InputCanvas({width, height, inputPos, addToBoard, destru
             x: inputPos.x,
             y: inputPos.y,
             fontSize: 18,
-            fontFamily: 'Courier New',
+            fontFamily: 'Monaco, monospace',
             fontColor: '#212121',
             fontWeight: 'bold',
             width: 150,

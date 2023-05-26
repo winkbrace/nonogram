@@ -17,7 +17,6 @@ function App() {
         console.log("drawCanvas clicked");
         const board = Board.fromInput(input);
         board.onNextStep((step) => setStep(step));
-        board.parse(input);
 
         setBoard(board);
         setSolver(new Solver(board));

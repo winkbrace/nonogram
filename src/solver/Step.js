@@ -5,8 +5,9 @@ export default class Step {
         countFromBothSides: "If we count from the edge on both sides of the line and hints have overlapping cells, that means that these cells must be filled.",
     };
 
-    constructor(line, cells, rule) {
+    constructor(line, hintIndex, cells, rule) {
         this.line = line;
+        this.hintIndex = hintIndex;
         this.cells = cells;
         this.rule = rule;
     }

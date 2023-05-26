@@ -1,7 +1,8 @@
 export default class Line {
-    constructor(id, cells) {
+    constructor(id, cells, hints) {
         this.id = id;
         this.cells = cells;
+        this.hints = hints;
     }
 
     isSolved() {
