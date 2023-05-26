@@ -11,6 +11,8 @@ export default class Board {
     // we have shown here for when we step through the solution one step at a time.
     // I couldn't make this work in the Canvas component.
     shownCells = [];
+    // TODO add solvedHints for the same reason
+    solvedHints = [];
 
     rowHints;
     colHints;

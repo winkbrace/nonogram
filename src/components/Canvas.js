@@ -83,36 +83,32 @@ export default function Canvas({board}) {
         ctx.font = "bold " + Math.floor(cellSize * 0.65) + "px Monaco";
         ctx.textAlign = "right";
         for (let r = 0; r < rows; r++) {
-            const hintsLength = board.rowHints[r].length;
-            if (!hintsLength) {
-                continue;
-            }
+            const hintsLength = board.rowHints[r].length ?? 0;
             for (let i = 0; i < hintsLength; i++) {
-                const pos = findPositionAt(r + 1, i - hintsLength + 1);
+                const {x, y} = findPositionAt(r + 1, i - hintsLength + 1);
+                const hint = board.rowHints[r][i];
                 ctx.fillText(
-                    board.rowHints[r][i].nr,
-                    Math.floor(pos.x - (cellSize * 0.25)),
-                    Math.floor(pos.y - (cellSize * 0.25))
+                    hint.nr,
+                    Math.floor(x - (cellSize * 0.25)),
+                    Math.floor(y - (cellSize * 0.25))
                 );
             }
         }
         ctx.textAlign = "center";
         for (let c = 0; c < cols; c++) {
-            const hintsLength = board.colHints[c].length;
-            if (!hintsLength) {
-                continue;
-            }
+            const hintsLength = board.colHints[c].length ?? 0;
             for (let i = 0; i < hintsLength; i++) {
-                const pos = findPositionAt(i - hintsLength + 1, c + 1);
+                const {x, y} = findPositionAt(i - hintsLength + 1, c + 1);
+                const hint = board.colHints[c][i];
                 ctx.fillText(
-                    board.colHints[c][i].nr,
-                    Math.floor(pos.x - (cellSize * 0.5)),
-                    Math.floor(pos.y - (cellSize * 0.32))
+                    hint.nr,
+                    Math.floor(x - (cellSize * 0.5)),
+                    Math.floor(y - (cellSize * 0.32))
                 );
             }
         }
 
-        // Draw the cells previously filled by the user or the solver steps.
+        // Draw the cells previously discovered by the solver steps.
         board.shownCells.forEach((cell) => {
             fillCell(ctx, cell.r, cell.c, cell.color);
         });
@@ -122,9 +118,12 @@ export default function Canvas({board}) {
         if (r < 0 || r >= rows || c < 0 || c >= cols)
             return;
 
-        const {x, y} = findPositionAt(r, c);
+        const {x, y} = findPositionAt(r, c, false);
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, cellSize, cellSize);
+        if (color === 'black')
+            ctx.fillRect(x, y, cellSize-1, cellSize-1);
+        else
+            ctx.fillRect(x+1, y+1, cellSize-3, cellSize-3);
     }
 
     function createInputCanvas(r, c) {

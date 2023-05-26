@@ -1,6 +1,9 @@
 import Step from "./Step";
+import Line from "./Line";
 
 export default class Solver {
+    somethingChanged = true;
+
     constructor(board) {
         this.board = board;
         this.steps = [];
@@ -22,13 +25,17 @@ export default class Solver {
     }
 
     solve() {
-        this.board.rowHints.forEach((hints, r) => {
-            this.solveLine(this.board.getRow(r));
-        });
+        while (this.somethingChanged) {
+            this.somethingChanged = false;
 
-        this.board.colHints.forEach((hints, c) => {
-            this.solveLine(this.board.getCol(c));
-        });
+            this.board.rowHints.forEach((hints, r) => {
+                this.solveLine(this.board.getRow(r));
+            });
+
+            this.board.colHints.forEach((hints, c) => {
+                this.solveLine(this.board.getCol(c));
+            });
+        }
 
         this.isSolved = true;
     }
@@ -39,6 +46,12 @@ export default class Solver {
         this.noHintsRule(line);
         this.countFromBothSidesRule(line);
         this.drawFromTheEdgeRule(line);
+        this.fillBeforeFirstEmptyFromEdge(line);
+    }
+
+    addStep(step) {
+        this.steps.push(step);
+        this.somethingChanged = true;
     }
 
     /**
@@ -47,7 +60,7 @@ export default class Solver {
     noHintsRule(line) {
         if (! line.hints.length) {
             line.markAllUnknownAsEmpty();
-            this.steps.push(new Step(line, 0, line.cells, "noHints"));
+            this.addStep(new Step(line, 0, line.cells, "noHints"));
         }
     }
 
@@ -87,7 +100,7 @@ export default class Solver {
             if (unknown.length === 0) continue;
 
             cells.forEach(cell => cell.markFilled());
-            this.steps.push(new Step(line, h, cells, "countFromBothSides"));
+            this.addStep(new Step(line, h, cells, "countFromBothSides"));
         }
     }
 
@@ -107,14 +120,50 @@ export default class Solver {
             cells.forEach(cell => cell.markFilled());
             cells[firstHint.nr].markEmpty();
             firstHint.solved = true;
-            this.steps.push(new Step(line, 0, cells, "fromTheEdge"))
+            this.addStep(new Step(line, 0, cells, "fromTheEdge"))
         }
         if (! lastHint.solved && lastCell.isFilled()) {
             const cells = line.cells.slice(line.cells.length - lastHint.nr - 1);
             cells.forEach(cell => cell.markFilled());
             cells[0].markEmpty();
             lastHint.solved = true;
-            this.steps.push(new Step(line, line.hints.length - 1, cells, "fromTheEdge"))
+            this.addStep(new Step(line, line.hints.length - 1, cells, "fromTheEdge"))
+        }
+    }
+
+    fillBeforeFirstEmptyFromEdge(line) {
+        // if there is an empty cell in the line
+        // and there is a filled cell before it
+        // and there is less than 2 * hint + 1 cells between the edge and the empty cell
+        // then we can fill the cells between the edge and the empty cell
+        const emptyCells = line.cells.filter(cell => cell.isEmpty());
+        if (emptyCells.length === 0) return;
+
+        const filledCells = line.cells.filter(cell => cell.isFilled());
+        if (filledCells.length === 0) return;
+
+        const firstEmptyCell = emptyCells[0];
+        const firstFilledCell = filledCells[0];
+        const firstEmptyCellIndex = line.cells.indexOf(firstEmptyCell);
+        const firstFilledCellIndex = line.cells.indexOf(firstFilledCell);
+
+        let hint = line.hints[0];
+        if (firstFilledCellIndex < firstEmptyCellIndex && firstEmptyCellIndex < 2 * hint.nr) {
+            const subLine = new Line('', line.cells.slice(0, firstEmptyCellIndex), [hint]);
+            this.drawFromTheEdgeRule(subLine);
+            this.countFromBothSidesRule(subLine);
+        }
+
+        const lastEmptyCell = emptyCells[emptyCells.length - 1];
+        const lastFilledCell = filledCells[filledCells.length - 1];
+        const lastEmptyCellIndex = line.cells.indexOf(lastEmptyCell);
+        const lastFilledCellIndex = line.cells.indexOf(lastFilledCell);
+
+        hint = line.hints[line.hints.length - 1];
+        if (lastFilledCellIndex > lastEmptyCellIndex && lastEmptyCellIndex > line.cells.length - 2 * hint.nr) {
+            const subLine = new Line('', line.cells.slice(lastEmptyCellIndex + 1), [hint]);
+            this.drawFromTheEdgeRule(subLine);
+            this.countFromBothSidesRule(subLine);
         }
     }
 }
