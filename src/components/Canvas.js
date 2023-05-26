@@ -90,7 +90,7 @@ export default function Canvas({board}) {
             for (let i = 0; i < hintsLength; i++) {
                 const pos = findPositionAt(r + 1, i - hintsLength + 1);
                 ctx.fillText(
-                    board.rowHints[r][i],
+                    board.rowHints[r][i].nr,
                     Math.floor(pos.x - (cellSize * 0.25)),
                     Math.floor(pos.y - (cellSize * 0.25))
                 );
@@ -105,7 +105,7 @@ export default function Canvas({board}) {
             for (let i = 0; i < hintsLength; i++) {
                 const pos = findPositionAt(i - hintsLength + 1, c + 1);
                 ctx.fillText(
-                    board.colHints[c][i],
+                    board.colHints[c][i].nr,
                     Math.floor(pos.x - (cellSize * 0.5)),
                     Math.floor(pos.y - (cellSize * 0.32))
                 );
@@ -114,9 +114,7 @@ export default function Canvas({board}) {
 
         // Draw the cells previously filled by the user or the solver steps.
         board.shownCells.forEach((cell) => {
-            const {x, y} = findPositionAt(cell.r, cell.c);
-            ctx.fillStyle = 'black';
-            ctx.fillRect(x, y, cellSize, cellSize);
+            fillCell(ctx, cell.r, cell.c, cell.color);
         });
     };
 
@@ -127,12 +125,10 @@ export default function Canvas({board}) {
         const {x, y} = findPositionAt(r, c);
         ctx.fillStyle = color;
         ctx.fillRect(x, y, cellSize, cellSize);
-
-        board.addShownCell(r, c);
     }
 
     function createInputCanvas(r, c) {
-        const values = board.getHintsAtPos(r, c).join(" ");
+        const values = board.getHintsAtPos(r, c).map(hint => hint.nr).join(" ");
         const pos = findPositionAt(r, c, false);
         // ensure the inputs are placed inside the canvas
         pos.x = c > cols - 9 ? size.width - 180 : pos.x;
@@ -209,6 +205,7 @@ export default function Canvas({board}) {
         // draw the discovered cells
         step.cells.forEach((cell) => {
             fillCell(ctx, cell.r, cell.c, cell.color);
+            board.addShownCell(cell);
         });
     }
 

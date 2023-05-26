@@ -1,5 +1,6 @@
 import Cell from "./Cell";
 import Line from "./Line";
+import Hint from "./Hint";
 
 export default class Board {
     rows;
@@ -56,17 +57,17 @@ export default class Board {
         return new Line(`column ${c}`, this.grid.map(row => row[c]), this.colHints[c]);
     }
 
-    addShownCell(r, c) {
-        this.shownCells.push(this.grid[r][c]);
+    addShownCell(cell) {
+        this.shownCells.push(cell); // TODO: deduplicate
     }
 
     addRowHints(r, hints) {
-        this.rowHints[r] = hints;
+        this.rowHints[r] = hints.map(hint => new Hint(hint));
         this.refreshInputString();
     }
 
     addColHints(c, hints) {
-        this.colHints[c] = hints;
+        this.colHints[c] = hints.map(hint => new Hint(hint));
         this.refreshInputString();
     }
 
@@ -86,9 +87,9 @@ export default class Board {
 
     refreshInputString() {
         this.inputString = "c["
-            + this.colHints.map(hints => hints.join(" ")).join(",")
+            + this.colHints.map(hints => hints.map(hint => hint.nr).join(" ")).join(",")
             + "]r["
-            + this.rowHints.map(hints => hints.join(" ")).join(",")
+            + this.rowHints.map(hints => hints.map(hint => hint.nr).join(" ")).join(",")
             + "]";
 
         console.log("The input string is: ", this.inputString);
@@ -134,8 +135,8 @@ export default class Board {
 
         this.cols = cols.length;
         this.rows = rows.length;
-        this.colHints = cols.map(hints => hints.split(" ").map(Number).map(n => n > 0 ? n : ""));
-        this.rowHints = rows.map(hints => hints.split(" ").map(Number).map(n => n > 0 ? n : ""));
+        this.colHints = cols.map(hints => hints.split(" ").map(Number).map(n => new Hint(n > 0 ? n : "")));
+        this.rowHints = rows.map(hints => hints.split(" ").map(Number).map(n => new Hint(n > 0 ? n : "")));
 
         this.createGrid();
 
