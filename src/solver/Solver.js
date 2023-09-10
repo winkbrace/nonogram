@@ -47,6 +47,7 @@ export default class Solver {
         this.countFromBothSidesRule(line);
         this.drawFromTheEdgeRule(line);
         this.fillBeforeFirstEmptyFromEdge(line);
+        this.fillBeforeSolvedHint(line);
     }
 
     addStep(step) {
@@ -67,7 +68,7 @@ export default class Solver {
     /**
      * If we count from the edge on both sides of the line and hints have overlapping cells, we can mark the cells as filled.
      */
-    countFromBothSidesRule(line) {
+    countFromBothSidesRule(line, logStep = true) {
         const hints = line.hints;
         const start = [];
         const end = [];
@@ -100,7 +101,7 @@ export default class Solver {
             if (unknown.length === 0) continue;
 
             cells.forEach(cell => cell.markFilled());
-            this.addStep(new Step(line, h, cells, "countFromBothSides"));
+            logStep && this.addStep(new Step(line, h, cells, "countFromBothSides"));
         }
     }
 
@@ -108,7 +109,7 @@ export default class Solver {
      * When we have a filled cell on the edge, we can draw the hint on that edge
      * and an empty cell right next to it.
      */
-    drawFromTheEdgeRule(line) {
+    drawFromTheEdgeRule(line, logStep = true) {
         const firstHint = line.hints[0];
         const firstCell = line.cells[0];
 
@@ -120,17 +121,18 @@ export default class Solver {
             cells.forEach(cell => cell.markFilled());
             cells[firstHint.nr].markEmpty();
             firstHint.solved = true;
-            this.addStep(new Step(line, 0, cells, "fromTheEdge"))
+            logStep && this.addStep(new Step(line, 0, cells, "fromTheEdge"))
         }
         if (! lastHint.solved && lastCell.isFilled()) {
             const cells = line.cells.slice(line.cells.length - lastHint.nr - 1);
             cells.forEach(cell => cell.markFilled());
             cells[0].markEmpty();
             lastHint.solved = true;
-            this.addStep(new Step(line, line.hints.length - 1, cells, "fromTheEdge"))
+            logStep && this.addStep(new Step(line, line.hints.length - 1, cells, "fromTheEdge"))
         }
     }
 
+    // draw first hint from edge
     fillBeforeFirstEmptyFromEdge(line) {
         // if there is an empty cell in the line
         // and there is a filled cell before it
@@ -147,11 +149,15 @@ export default class Solver {
         const firstEmptyCellIndex = line.cells.indexOf(firstEmptyCell);
         const firstFilledCellIndex = line.cells.indexOf(firstFilledCell);
 
-        let hint = line.hints[0];
+        let hint = line.firstHint;
         if (firstFilledCellIndex < firstEmptyCellIndex && firstEmptyCellIndex < 2 * hint.nr) {
             const subLine = new Line('', line.cells.slice(0, firstEmptyCellIndex), [hint]);
-            this.drawFromTheEdgeRule(subLine);
-            this.countFromBothSidesRule(subLine);
+            if ( ! subLine.isSolved()) {
+                this.drawFromTheEdgeRule(subLine, false);
+                this.countFromBothSidesRule(subLine, false);
+                this.addStep(new Step(line, 0, subLine.cells, "fillFirstHint"));
+                subLine.isSolved() && hint.markSolved(subLine);
+            }
         }
 
         const lastEmptyCell = emptyCells[emptyCells.length - 1];
@@ -159,11 +165,23 @@ export default class Solver {
         const lastEmptyCellIndex = line.cells.indexOf(lastEmptyCell);
         const lastFilledCellIndex = line.cells.indexOf(lastFilledCell);
 
-        hint = line.hints[line.hints.length - 1];
+        hint = line.lastHint;
         if (lastFilledCellIndex > lastEmptyCellIndex && lastEmptyCellIndex > line.cells.length - 2 * hint.nr) {
             const subLine = new Line('', line.cells.slice(lastEmptyCellIndex + 1), [hint]);
-            this.drawFromTheEdgeRule(subLine);
-            this.countFromBothSidesRule(subLine);
+            if ( ! subLine.isSolved()) {
+                this.drawFromTheEdgeRule(subLine, false);
+                this.countFromBothSidesRule(subLine, false);
+                this.addStep(new Step(line, 0, subLine.cells, "fillFirstHint"));
+                subLine.isSolved() && hint.markSolved(subLine);
+            }
+        }
+    }
+
+    fillBeforeSolvedHint(line) {
+        let hint = line.firstHint;
+        if (hint.isSolved() && hint.firstCell !== line.firstCell) {
+            // TODO move get emptyCells, firstFilledCell, etc to Line
+            const subLine = new Line('', line.cells.slice(0, firstFilledCell), [hint]);
         }
     }
 }

@@ -20,4 +20,20 @@ export default class Line {
     get length() {
         return this.cells.length;
     }
+
+    get firstHint() {
+        return this.hints[0];
+    }
+
+    get lastHint() {
+        return this.hints[this.hints.length - 1];
+    }
+
+    get firstCell() {
+        return this.cells[0];
+    }
+
+    get lastCell() {
+        return this.cells[this.cells.length - 1];
+    }
 }
