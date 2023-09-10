@@ -48,6 +48,7 @@ export default class Solver {
         this.drawFromTheEdgeRule(line);
         this.fillBeforeFirstEmptyFromEdge(line);
         this.fillBeforeSolvedHint(line);
+        this.findEmptyAtFoundHints(line);
     }
 
     addStep(step) {
@@ -120,24 +121,27 @@ export default class Solver {
             const cells = line.cells.slice(0, firstHint.nr + 1);
             cells.forEach(cell => cell.markFilled());
             cells[firstHint.nr].markEmpty();
-            firstHint.solved = true;
+            firstHint.markSolved(cells);
             logStep && this.addStep(new Step(line, 0, cells, "fromTheEdge"))
         }
         if (! lastHint.solved && lastCell.isFilled()) {
             const cells = line.cells.slice(line.cells.length - lastHint.nr - 1);
             cells.forEach(cell => cell.markFilled());
             cells[0].markEmpty();
-            lastHint.solved = true;
+            lastHint.markSolved(cells);
             logStep && this.addStep(new Step(line, line.hints.length - 1, cells, "fromTheEdge"))
         }
     }
 
-    // draw first hint from edge
+    /**
+     * Draw first hint from edge
+     *
+     * if there is an empty cell in the line
+     * and there is a filled cell before it
+     * and there is less than 2 * hint + 1 cells between the edge and the empty cell
+     * then we can fill the cells between the edge and the empty cell
+     */
     fillBeforeFirstEmptyFromEdge(line) {
-        // if there is an empty cell in the line
-        // and there is a filled cell before it
-        // and there is less than 2 * hint + 1 cells between the edge and the empty cell
-        // then we can fill the cells between the edge and the empty cell
         const emptyCells = line.cells.filter(cell => cell.isEmpty());
         if (emptyCells.length === 0) return;
 
@@ -151,7 +155,7 @@ export default class Solver {
 
         let hint = line.firstHint;
         if (firstFilledCellIndex < firstEmptyCellIndex && firstEmptyCellIndex < 2 * hint.nr) {
-            const subLine = new Line('', line.cells.slice(0, firstEmptyCellIndex), [hint]);
+            const subLine = new Line(`first ${firstEmptyCellIndex} cells of ${line.id}`, line.cells.slice(0, firstEmptyCellIndex), [hint]);
             if ( ! subLine.isSolved()) {
                 this.drawFromTheEdgeRule(subLine, false);
                 this.countFromBothSidesRule(subLine, false);
@@ -167,7 +171,7 @@ export default class Solver {
 
         hint = line.lastHint;
         if (lastFilledCellIndex > lastEmptyCellIndex && lastEmptyCellIndex > line.cells.length - 2 * hint.nr) {
-            const subLine = new Line('', line.cells.slice(lastEmptyCellIndex + 1), [hint]);
+            const subLine = new Line(`last ${(line.cells.length - lastEmptyCellIndex)} cells of ${line.id}`, line.cells.slice(lastEmptyCellIndex + 1), [hint]);
             if ( ! subLine.isSolved()) {
                 this.drawFromTheEdgeRule(subLine, false);
                 this.countFromBothSidesRule(subLine, false);
@@ -177,11 +181,36 @@ export default class Solver {
         }
     }
 
+    // TODO I had 2 attempts. Make one work.
+
     fillBeforeSolvedHint(line) {
         let hint = line.firstHint;
         if (hint.isSolved() && hint.firstCell !== line.firstCell) {
             // TODO move get emptyCells, firstFilledCell, etc to Line
             const subLine = new Line('', line.cells.slice(0, firstFilledCell), [hint]);
+        }
+    }
+
+    /**
+     * If a hint is found, check if there is enough space before or after it for other hints
+     * or mark all empty if it was the first or last hint.
+     */
+    findEmptyAtFoundHints(line) {
+        // TODO make this work
+        const hints = line.hints;
+        const cells = line.cells;
+
+        let hint = hints[0];
+        if (hint.solved) {
+            const unknownCells = cells.slice(hint.nr).filter(cell => cell.isUnknown());
+            unknownCells.forEach(cell => cell.markEmpty());
+            this.addStep(new Step(`first cells of ${line.id}`, 0, unknownCells, "emptyAtFoundHints"));
+        }
+        hint = hints[hints.length - 1];
+        if (hint.solved) {
+            const unknownCells = cells.slice(0, cells.length - hint.nr).filter(cell => cell.isUnknown());
+            unknownCells.forEach(cell => cell.markEmpty());
+            this.addStep(new Step(`last cells of ${line.id}`, hints.length - 1, unknownCells, "emptyAtFoundHints"));
         }
     }
 }
